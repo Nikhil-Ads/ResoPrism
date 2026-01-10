@@ -14,6 +14,7 @@ class InboxCard(BaseModel):
     score: float = Field(..., ge=0.0, le=1.0, description="Score between 0 and 1")
     badge: Optional[str] = None
     meta: dict = Field(default_factory=dict)
+    embedding: Optional[list[float]] = Field(default=None, description="Vector embedding for semantic search")
 
 
 class GrantCard(InboxCard):
