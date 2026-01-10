@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AnimatedFeatureCard } from "@/components/cards/AnimatedFeatureCard";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import GradientText from "@/components/GradientText";
 
 const features = [
   {
@@ -71,43 +72,38 @@ const features = [
 
 export function FeatureShowcase() {
   return (
-    <section className="relative border-t py-24 text-foreground" style={{ backgroundColor: 'hsl(0 0% 3.9%)' }}>
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center mb-16">
         <ScrollReveal direction="down" delay={0.1}>
-          <div className="mb-4 text-center">
-            <span className="inline-block rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
-              Features
-            </span>
-          </div>
+          <GradientText
+            colors={["#5eead4", "#67e8f9", "#40ffaa", "#67e8f9", "#5eead4"]}
+            animationSpeed={4}
+            showBorder={false}
+            className="text-3xl md:text-4xl font-bold mb-4 block"
+          >
+            Everything you need to manage research
+          </GradientText>
         </ScrollReveal>
-
         <ScrollReveal direction="up" delay={0.2}>
-          <h2 className="mb-4 text-center text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            Powerful Capabilities
-          </h2>
-        </ScrollReveal>
-
-        <ScrollReveal direction="up" delay={0.3}>
-          <p className="mx-auto mb-16 max-w-2xl text-center text-xl text-muted-foreground">
-            Built with cutting-edge technology to deliver intelligent research
-            aggregation and analysis
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+            Powerful features designed to give you complete control over your
+            research aggregation and analysis
           </p>
         </ScrollReveal>
-
-        {/* Feature Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            <AnimatedFeatureCard
-              key={feature.title}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              delay={index * 0.1}
-            />
-          ))}
-        </div>
       </div>
-    </section>
+
+      {/* Feature Grid */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {features.map((feature, index) => (
+          <AnimatedFeatureCard
+            key={feature.title}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+            delay={index * 0.1}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

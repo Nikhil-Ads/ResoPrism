@@ -1,8 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 
 interface AnimatedFeatureCardProps {
@@ -18,67 +16,6 @@ export function AnimatedFeatureCard({
   description,
   delay = 0,
 }: AnimatedFeatureCardProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  // Optimized spring settings for better performance
-  const [isMobile, setIsMobile] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  // Check for mobile and reduced motion on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsMobile(window.innerWidth < 768);
-      setPrefersReducedMotion(
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      );
-    }
-  }, []);
-
-  const springConfig = isMobile || prefersReducedMotion
-    ? { stiffness: 300, damping: 80 }
-    : { stiffness: 500, damping: 100 };
-
-  const mouseXSpring = useSpring(x, springConfig);
-  const mouseYSpring = useSpring(y, springConfig);
-
-  // Reduced rotation on mobile or reduced motion for better performance
-  const maxRotation = isMobile || prefersReducedMotion ? 2 : 7.5;
-  
-  const rotateX = useTransform(
-    mouseYSpring,
-    [-0.5, 0.5],
-    prefersReducedMotion ? ["0deg", "0deg"] : [`${maxRotation}deg`, `-${maxRotation}deg`]
-  );
-  const rotateY = useTransform(
-    mouseXSpring,
-    [-0.5, 0.5],
-    prefersReducedMotion ? ["0deg", "0deg"] : [`-${maxRotation}deg`, `${maxRotation}deg`]
-  );
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-    setIsHovered(false);
-  };
 
   return (
     <motion.div
@@ -88,69 +25,24 @@ export function AnimatedFeatureCard({
       transition={{ duration: 0.5, delay }}
       className="group relative h-full"
     >
-      <motion.div
-        ref={ref}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          rotateX,
-          rotateY,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative h-full"
-      >
-        <Card className="relative h-full overflow-hidden border-2 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20">
-          {/* Glow effect on hover */}
-          <motion.div
-            className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              background: "radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1), transparent 70%)",
-            }}
-          />
+      <div className="glare-hover group rounded-2xl border border-slate-800/50 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80 p-6 space-y-4 hover:border-teal-500/40 hover:shadow-2xl hover:shadow-teal-500/20 transition-all hover:scale-105 transform relative overflow-hidden h-full">
+        {/* Liquid morphing shape */}
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-400/0 via-cyan-300/0 to-teal-300/0 group-hover:from-teal-400/10 group-hover:via-cyan-300/10 group-hover:to-teal-300/10 transition-all blur-xl liquid-shape" />
+        <div className="absolute -inset-2 bg-gradient-to-br from-teal-400/20 via-cyan-300/20 to-teal-300/20 blur-3xl opacity-0 group-hover:opacity-60 transition-opacity -z-10 liquid-shape" />
 
-          <CardHeader className="relative z-10">
-            <motion.div
-              className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:bg-primary/20"
-              whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 0.5 }}
-            >
-              <Icon className="h-7 w-7 text-primary transition-colors duration-300 group-hover:text-primary" />
-            </motion.div>
+        <div className="relative z-10">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 transition-all duration-300 group-hover:scale-110 group-hover:border-teal-400/50">
+            <Icon className="h-7 w-7 text-teal-400 transition-colors duration-300" />
+          </div>
 
-            <CardTitle className="text-xl font-bold tracking-tight transition-colors duration-300 group-hover:text-primary">
-              {title}
-            </CardTitle>
-            <CardDescription className="mt-2 text-base leading-relaxed">
-              {description}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="relative z-10">
-            {/* Spacer for content */}
-          </CardContent>
-
-          {/* Shine effect on hover */}
-          <motion.div
-            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100"
-            style={{
-              background: "linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%)",
-              transform: "translateX(-100%)",
-            }}
-            animate={
-              isHovered
-                ? {
-                    transform: "translateX(100%)",
-                  }
-                : {}
-            }
-            transition={{
-              duration: 0.6,
-              ease: "easeInOut",
-            }}
-          />
-        </Card>
-      </motion.div>
+          <h3 className="text-xl font-bold tracking-tight text-slate-100 mb-2 group-hover:text-teal-300 transition-colors">
+            {title}
+          </h3>
+          <p className="text-base leading-relaxed text-slate-400">
+            {description}
+          </p>
+        </div>
+      </div>
     </motion.div>
   );
 }

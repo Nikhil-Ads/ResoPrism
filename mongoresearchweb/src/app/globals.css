@@ -55,10 +55,10 @@
     color-scheme: dark;
   }
   html {
-    background-color: hsl(var(--background));
+    background-color: rgb(2, 6, 23); /* slate-950 */
   }
   body {
-    background-color: hsl(var(--background));
+    background-color: rgb(2, 6, 23); /* slate-950 */
     color: hsl(var(--foreground));
     font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   }
@@ -122,4 +122,111 @@
   .ring-ring {
     --tw-ring-color: hsl(var(--ring));
   }
+}
+
+/* Numa-style animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slow-delay-1 {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes pulse-slow-delay-2 {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes liquid-shape {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+@keyframes liquid-shape-2 {
+  0%, 100% {
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  }
+  50% {
+    border-radius: 70% 30% 50% 50% / 30% 40% 60% 70%;
+  }
+}
+
+@keyframes liquid-shape-3 {
+  0%, 100% {
+    border-radius: 50% 50% 60% 40% / 60% 50% 50% 40%;
+  }
+  50% {
+    border-radius: 40% 60% 50% 60% / 50% 40% 60% 50%;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.liquid-shape {
+  animation: liquid-shape 8s ease-in-out infinite;
+}
+
+.liquid-shape-2 {
+  animation: liquid-shape-2 10s ease-in-out infinite;
+}
+
+.liquid-shape-3 {
+  animation: liquid-shape-3 12s ease-in-out infinite;
+}
+
+.silver-blur {
+  background: radial-gradient(circle, rgba(192, 192, 192, 0.1), transparent);
+  filter: blur(40px);
+}
+
+.glare-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.glare-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.glare-hover:hover::before {
+  left: 100%;
 }

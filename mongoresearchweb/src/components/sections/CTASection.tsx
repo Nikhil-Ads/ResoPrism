@@ -26,23 +26,36 @@ function MovingBorder({ children, className }: { children: React.ReactNode; clas
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`group relative overflow-hidden rounded-lg border-2 border-primary/20 bg-background p-[2px] transition-all duration-300 hover:border-primary/50 ${className}`}
+      className={`group relative overflow-hidden rounded-lg border p-[2px] transition-all duration-300 ${className}`}
+      style={{
+        borderColor: 'rgba(255, 255, 255, 0.18)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+      }}
     >
       {/* Animated gradient border */}
       <motion.div
         className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.3), transparent 40%)`,
+          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.15), transparent 50%)`,
         }}
         animate={{
           background: isHovered
-            ? `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.4), transparent 50%)`
-            : `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1), transparent 70%)`,
+            ? `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.2), transparent 60%)`
+            : `radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 70%)`,
         }}
       />
 
       {/* Content */}
-      <div className="relative z-10 rounded-md bg-background/90 backdrop-blur-sm p-4">
+      <div 
+        className="relative z-10 rounded-md p-4"
+        style={{ 
+          background: 'rgba(255, 255, 255, 0.08)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
         {children}
       </div>
 
@@ -94,10 +107,10 @@ function Spotlight({ className = "" }: { className?: string }) {
       <motion.div
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 hover:opacity-100"
         style={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.15), transparent 60%)`,
+          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.1), transparent 60%)`,
         }}
         animate={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.15), transparent 60%)`,
+          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.1), transparent 60%)`,
         }}
         transition={{ type: "tween", ease: "backOut", duration: 0.5 }}
       />
@@ -107,22 +120,29 @@ function Spotlight({ className = "" }: { className?: string }) {
 
 export function CTASection() {
   return (
-    <section className="relative overflow-hidden border-t py-32 text-foreground" style={{ backgroundColor: 'hsl(0 0% 3.9%)' }}>
+    <section className="relative overflow-hidden border-t py-32" style={{ backgroundColor: 'transparent' }}>
       <Spotlight className="absolute inset-0" />
 
       <div className="container relative z-10 mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal direction="down" delay={0.1}>
-            <h2 className="mb-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+            <h2 
+              className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+              style={{ 
+                color: '#ffffff',
+                textShadow: '0 2px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)',
+              }}
+            >
               Ready to Transform Your
-              <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Research Workflow?
-              </span>
+              <span className="block">Research Workflow?</span>
             </h2>
           </ScrollReveal>
 
           <ScrollReveal direction="up" delay={0.2}>
-            <p className="mb-12 text-xl text-muted-foreground md:text-2xl">
+            <p 
+              className="mb-12 text-xl md:text-2xl"
+              style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+            >
               Experience the power of AI-driven research aggregation. Get started
               with our interactive demo and see how MongoResearch can revolutionize
               your research process.
@@ -135,7 +155,14 @@ export function CTASection() {
                 <Button
                   asChild
                   size="lg"
-                  className="group relative w-full overflow-hidden bg-primary text-base font-semibold text-primary-foreground transition-all duration-300 hover:bg-primary/90 sm:w-auto sm:text-lg"
+                  className="group relative w-full overflow-hidden border text-base font-semibold text-white transition-all duration-300 sm:w-auto sm:text-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    borderColor: 'rgba(255, 255, 255, 0.25)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                  }}
                 >
                   <Link href="/demo">
                     <span className="relative z-10">Try Demo Now</span>
@@ -153,7 +180,14 @@ export function CTASection() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="w-full border-2 text-base font-semibold backdrop-blur-sm transition-all duration-300 hover:border-primary hover:bg-primary/10 sm:w-auto sm:text-lg"
+                  className="w-full border text-base font-semibold transition-all duration-300 text-white sm:w-auto sm:text-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                  }}
                 >
                   <a
                     href="https://github.com"
@@ -169,17 +203,20 @@ export function CTASection() {
 
           {/* Additional info */}
           <ScrollReveal direction="fade" delay={0.4}>
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+            <div 
+              className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm"
+              style={{ color: 'rgba(255, 255, 255, 0.75)' }}
+            >
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <div className="h-2 w-2 rounded-full" style={{ background: 'rgba(255, 255, 255, 0.6)', boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)' }} />
                 <span>No credit card required</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <div className="h-2 w-2 rounded-full" style={{ background: 'rgba(255, 255, 255, 0.6)', boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)' }} />
                 <span>Free to explore</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-purple-500" />
+                <div className="h-2 w-2 rounded-full" style={{ background: 'rgba(255, 255, 255, 0.6)', boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)' }} />
                 <span>Open source</span>
               </div>
             </div>
