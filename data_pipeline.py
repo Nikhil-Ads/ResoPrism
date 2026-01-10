@@ -66,7 +66,7 @@ def upsert_to_mongo(collection_name: str, docs: List[Dict]):
 
 def process_news():
     print("\n--- Processing NEWS Data ---")
-    url = f"https://newsapi.org/v2/top-headlines?country=us&category=science&pageSize=50&apiKey={NEWS_API_KEY}"
+    url = f"https://newsapi.org/v2/top-headlines?country=us&category=science&pageSize=100&apiKey={NEWS_API_KEY}"
     
     try:
         resp = requests.get(url)
@@ -115,7 +115,7 @@ def process_papers(topic="artificial intelligence medical"):
     
     try:
         # 1. Get IDs
-        params = {"db": "pubmed", "term": topic, "retmode": "json", "retmax": 20}
+        params = {"db": "pubmed", "term": topic, "retmode": "json", "retmax": 60}
         r1 = requests.get(search_url, params=params)
         id_list = r1.json().get("esearchresult", {}).get("idlist", [])
         
@@ -173,7 +173,7 @@ def process_grants(keyword="Artificial Intelligence"):
         "keyword": keyword,
         "printFields": "id,title,fundsObligatedAmt,awardeeName,date,abstractText",
         "offset": 0,
-        "rpp": 25  # Top 25 grants
+        "rpp": 75  # Top 75 grants
     }
     
     try:
