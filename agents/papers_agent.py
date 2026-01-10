@@ -290,8 +290,8 @@ def papers_node(state: ResearchState) -> ResearchState:
 
 # Build the papers agent graph
 papers_workflow = StateGraph(ResearchState)
-papers_workflow.add_node("papers", papers_node)
-papers_workflow.set_entry_point("papers")
-papers_workflow.add_edge("papers", END)
+papers_workflow.add_node("fetch_papers", papers_node)
+papers_workflow.set_entry_point("fetch_papers")
+papers_workflow.add_edge("fetch_papers", END)
 
 PapersAgentGraph = papers_workflow.compile()
