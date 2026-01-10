@@ -23,10 +23,14 @@ Run Tests:
     pytest tests/
 """
 
+from dotenv import load_dotenv
 from langgraph.graph import StateGraph, END
 from models import ResearchState, InboxCard, GrantCard, PaperCard, NewsCard
 from agents import GrantsAgentGraph, PapersAgentGraph, NewsAgentGraph
 from ranking import rank_cards
+
+# Load environment variables once at the orchestrator level
+load_dotenv()
 
 # Valid intents
 VALID_INTENTS = {"grants", "papers", "news", "all"}
