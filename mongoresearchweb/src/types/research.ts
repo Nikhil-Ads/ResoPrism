@@ -67,3 +67,21 @@ export interface ResearchResponse {
   inbox_cards: InboxCard[];
   errors: string[];
 }
+
+export interface MindMapRequest {
+  grants: InboxCard[];
+  papers: InboxCard[];
+  news: InboxCard[];
+  user_query?: string;
+}
+
+export interface MindMapResponse {
+  markdown: string;
+  themes: string[];
+  connections: {
+    from_type: string;
+    to_type: string;
+    description: string;
+  }[];
+  error?: string;
+}

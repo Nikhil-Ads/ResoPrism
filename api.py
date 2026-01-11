@@ -6,8 +6,20 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from orchestrator import ORCHESTRATOR
 from models import ResearchState
-from url_research_service import process_url_research
-from cache import get_mongodb_status
+try:
+    from url_research_service import process_url_research
+    URL_RESEARCH_AVAILABLE = True
+except ImportError as e:
+    URL_RESEARCH_AVAILABLE = False
+    URL_RESEARCH_ERROR = str(e)
+    
+try:
+    from cache import get_mongodb_status
+    MONGODB_STATUS_AVAILABLE = True
+except ImportError:
+    MONGODB_STATUS_AVAILABLE = False
+    
+from mindmap_generator import generate_mindmap, generate_simple_mindmap, MindMapRequest
 
 app = FastAPI(
     title="Research Inbox API",
@@ -129,6 +141,12 @@ async def get_url_research(request: UrlResearchRequest):
     
     If the URL has been requested before, cached results are returned immediately.
     """
+    if not URL_RESEARCH_AVAILABLE:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"URL research service unavailable: {URL_RESEARCH_ERROR}"
+        )
+    
     try:
         # Validate URL format
         url = request.url.strip()
@@ -160,6 +178,14 @@ async def get_mongodb_status_endpoint():
     Useful for debugging MongoDB connection issues.
     Returns detailed error information if MongoDB is not connected.
     """
+    if not MONGODB_STATUS_AVAILABLE:
+        return {
+            "connected": False,
+            "mongodb_uri_set": False,
+            "database_name": None,
+            "message": "MongoDB module not available"
+        }
+    
     try:
         status = get_mongodb_status()
         
@@ -183,6 +209,106 @@ async def get_mongodb_status_endpoint():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error checking MongoDB status: {str(e)}")
+
+
+@app.post("/api/mindmap", response_model=dict)
+async def generate_mindmap_endpoint(request: MindMapRequest):
+    """
+    Generate a mind map from research results using OpenAI.
+    
+    This endpoint:
+    1. Takes grants, papers, and news results
+    2. Uses OpenAI to identify themes and connections
+    3. Returns markdown formatted for markmap.js visualization
+    
+    Request body should contain:
+    - **grants**: List of grant cards
+    - **papers**: List of paper cards  
+    - **news**: List of news cards
+    - **user_query**: Original search query (optional, for context)
+    
+    Returns:
+    - **markdown**: Hierarchical markdown for markmap.js
+    - **themes**: List of identified themes
+    - **connections**: Cross-type connections found
+    """
+    try:
+        # Convert Pydantic models to dicts
+        grants = [g if isinstance(g, dict) else g for g in request.grants]
+        papers = [p if isinstance(p, dict) else p for p in request.papers]
+        news = [n if isinstance(n, dict) else n for n in request.news]
+        
+        # Check if we have any data
+        if not grants and not papers and not news:
+            return {
+                "markdown": "# No Data\n\n## No research results provided",
+                "themes": [],
+                "connections": []
+            }
+        
+        # Generate mindmap using OpenAI
+        result = generate_mindmap(
+            grants=grants,
+            papers=papers,
+            news=news,
+            user_query=request.user_query
+        )
+        
+        return {
+            "markdown": result.markdown,
+            "themes": result.themes,
+            "connections": result.connections
+        }
+        
+    except Exception as e:
+        # Fallback to simple mindmap if OpenAI fails
+        try:
+            simple_md = generate_simple_mindmap(
+                grants=request.grants,
+                papers=request.papers,
+                news=request.news,
+                user_query=request.user_query
+            )
+            return {
+                "markdown": simple_md,
+                "themes": [],
+                "connections": [],
+                "error": f"OpenAI analysis failed, using simple structure: {str(e)}"
+            }
+        except Exception as e2:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Error generating mind map: {str(e2)}"
+            )
+
+
+@app.post("/api/mindmap/simple", response_model=dict)
+async def generate_simple_mindmap_endpoint(request: MindMapRequest):
+    """
+    Generate a simple hierarchical mind map without OpenAI analysis.
+    
+    Faster alternative that creates a basic structure grouping
+    items by type (grants, papers, news) without theme analysis.
+    """
+    try:
+        markdown = generate_simple_mindmap(
+            grants=request.grants,
+            papers=request.papers,
+            news=request.news,
+            user_query=request.user_query
+        )
+        
+        return {
+            "markdown": markdown,
+            "themes": ["Grants", "Papers", "News"],
+            "connections": []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating simple mind map: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

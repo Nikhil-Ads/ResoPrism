@@ -1,4 +1,4 @@
-import type { InboxRequest, ResearchResponse } from "@/types/research";
+import type { InboxRequest, ResearchResponse, MindMapRequest, MindMapResponse } from "@/types/research";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -66,5 +66,69 @@ export async function fetchInboxGet(
       throw new Error(`Failed to fetch inbox: ${error.message}`);
     }
     throw new Error("Failed to fetch inbox: Unknown error");
+  }
+}
+
+/**
+ * Generate a mind map from research results using OpenAI analysis
+ */
+export async function generateMindMap(
+  request: MindMapRequest
+): Promise<MindMapResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mindmap`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}. ${errorText}`
+      );
+    }
+
+    const data: MindMapResponse = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to generate mind map: ${error.message}`);
+    }
+    throw new Error("Failed to generate mind map: Unknown error");
+  }
+}
+
+/**
+ * Generate a simple mind map without OpenAI analysis (faster)
+ */
+export async function generateSimpleMindMap(
+  request: MindMapRequest
+): Promise<MindMapResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mindmap/simple`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}. ${errorText}`
+      );
+    }
+
+    const data: MindMapResponse = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to generate simple mind map: ${error.message}`);
+    }
+    throw new Error("Failed to generate simple mind map: Unknown error");
   }
 }
