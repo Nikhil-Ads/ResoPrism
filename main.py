@@ -6,8 +6,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
-from models import ResearchState, InboxCard
+from models import ResearchState, InboxCard, GrantCard, PaperCard, NewsCard
 from orchestrator import ORCHESTRATOR
+from ai_summarizer import generate_sector_summary
 
 app = FastAPI(
     title="Research Inbox Orchestrator API",
@@ -35,18 +36,33 @@ class SearchRequest(BaseModel):
     )
     lab_url: Optional[str] = Field(None, description="Optional lab URL")
     lab_profile: Optional[dict] = Field(None, description="Optional lab profile data")
+    text_chunks: Optional[list[str]] = Field(None, description="Optional list of text chunks for keyword extraction")
 
 
 class SearchResponse(BaseModel):
     """Response model for orchestrator search."""
     user_query: str = Field(..., description="Original search query")
     intent: Optional[str] = Field(None, description="Intent used for search")
+    extracted_keywords: Optional[list[str]] = Field(None, description="Top keywords extracted from chunks (if chunks were provided)")
     grants: list[dict] = Field(..., description="List of grant cards")
     papers: list[dict] = Field(..., description="List of paper cards")
     news: list[dict] = Field(..., description="List of news cards")
     inbox_cards: list[dict] = Field(..., description="Merged and ranked inbox cards")
     errors: list[str] = Field(..., description="List of error messages")
     summary: dict = Field(..., description="Summary statistics")
+
+
+class SummaryRequest(BaseModel):
+    """Request model for AI summary generation."""
+    results: list[dict] = Field(..., description="List of cards (grants, papers, or news) for the sector")
+    sector: Literal["grants", "papers", "news"] = Field(..., description="Sector type: grants, papers, or news")
+    lab_profile: Optional[dict] = Field(None, description="Optional lab profile information")
+
+
+class SummaryResponse(BaseModel):
+    """Response model for AI summary generation."""
+    summary: str = Field(..., description="AI-generated summary text")
+    sector: str = Field(..., description="Sector type that was summarized")
 
 
 @app.get("/")
@@ -58,6 +74,7 @@ async def root():
         "status": "running",
         "endpoints": {
             "search": "/api/search (POST)",
+            "generate_summary": "/api/generate-summary (POST)",
             "health": "/health (GET)",
             "docs": "/docs (GET)"
         }
@@ -99,7 +116,8 @@ async def search(request: SearchRequest):
             user_query=request.user_query,
             intent=request.intent,
             lab_url=request.lab_url,
-            lab_profile=request.lab_profile
+            lab_profile=request.lab_profile,
+            text_chunks=request.text_chunks
         )
         
         # Invoke orchestrator
@@ -130,6 +148,7 @@ async def search(request: SearchRequest):
         return SearchResponse(
             user_query=result_state.user_query,
             intent=result_state.intent or "all",
+            extracted_keywords=result_state.extracted_keywords,
             grants=grants,
             papers=papers,
             news=news,
@@ -158,34 +177,40 @@ async def search_get(query: str, intent: Optional[str] = None):
     return await search(request)
 
 
-@app.post("/api/inbox", response_model=SearchResponse)
-async def inbox_search(request: SearchRequest):
+@app.post("/api/generate-summary", response_model=SummaryResponse)
+async def generate_summary(request: SummaryRequest):
     """
-    Inbox search endpoint (alias for /api/search to match frontend).
+    Generate AI-powered summary for a specific sector (grants, papers, or news).
     
     Args:
-        request: SearchRequest with user_query and optional intent
+        request: SummaryRequest with results array, sector type, and optional lab_profile
         
     Returns:
-        SearchResponse with grants, papers, news, and ranked inbox_cards
+        SummaryResponse with AI-generated summary text
     """
-    return await search(request)
-
-
-@app.get("/api/inbox")
-async def inbox_search_get(user_query: str, intent: Optional[str] = None):
-    """
-    GET endpoint for inbox search (alias for /api/search to match frontend).
-    
-    Args:
-        user_query: Search query string (matches frontend parameter name)
-        intent: Optional intent (grants, papers, news, all)
+    try:
+        # Convert dict results back to appropriate card types using Pydantic model_validate
+        cards = []
+        if request.sector == "grants":
+            for item in request.results:
+                cards.append(GrantCard.model_validate(item))
+        elif request.sector == "papers":
+            for item in request.results:
+                cards.append(PaperCard.model_validate(item))
+        elif request.sector == "news":
+            for item in request.results:
+                cards.append(NewsCard.model_validate(item))
         
-    Returns:
-        SearchResponse with results
-    """
-    request = SearchRequest(user_query=user_query, intent=intent)
-    return await search(request)
+        # Generate summary using AI summarizer with lab profile
+        summary_text = generate_sector_summary(cards, request.sector, request.lab_profile)
+        
+        return SummaryResponse(
+            summary=summary_text,
+            sector=request.sector
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Summary generation error: {str(e)}")
 
 
 if __name__ == "__main__":

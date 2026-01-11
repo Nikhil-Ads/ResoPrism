@@ -56,14 +56,35 @@ export interface InboxRequest {
   intent?: "grants" | "papers" | "news" | "all";
   lab_url?: string;
   lab_profile?: Record<string, unknown>;
+  text_chunks?: string[];
 }
 
 export interface ResearchResponse {
   user_query: string;
   intent?: string;
+  extracted_keywords?: string[] | null;
   grants: GrantCard[];
   papers: PaperCard[];
   news: NewsCard[];
   inbox_cards: InboxCard[];
   errors: string[];
+  summary?: {
+    total_grants: number;
+    total_papers: number;
+    total_news: number;
+    total_cards: number;
+    has_errors: boolean;
+    error_count: number;
+  };
+}
+
+export interface SummaryRequest {
+  results: GrantCard[] | PaperCard[] | NewsCard[];
+  sector: "grants" | "papers" | "news";
+  lab_profile?: Record<string, unknown>;
+}
+
+export interface SummaryResponse {
+  summary: string;
+  sector: "grants" | "papers" | "news";
 }

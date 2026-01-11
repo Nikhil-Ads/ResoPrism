@@ -3,12 +3,11 @@
 import Link from "next/link";
 import GradientText from "@/components/GradientText";
 import { ArrowRight, Github } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "@/components/backgrounds/AnimatedBackground";
-import { TextGenerateEffect } from "@/components/animations/TextGenerateEffect";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { FeatureShowcase } from "@/components/sections/FeatureShowcase";
 import { Footer } from "@/components/sections/Footer";
+import { HowItWorksSection } from "@/components/sections/HowItWorksSection";
 
 export default function Home() {
   return (
@@ -35,7 +34,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="relative px-6 py-6 z-20">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-slate-900/90 rounded-2xl border border-slate-800/50 px-6 py-3 flex items-center relative">
+          <div className="bg-black/90 backdrop-blur-sm rounded-2xl border border-slate-800/50 px-6 py-3 flex items-center relative">
             {/* Logo - Top Left */}
             <div className="flex items-center gap-3 flex-shrink-0 absolute left-6">
               <GradientText
@@ -52,6 +51,9 @@ export default function Home() {
             <div className="flex items-center gap-8 mx-auto">
               <Link href="#" className="text-sm text-slate-300 hover:text-teal-400 transition-colors">
                 Home
+              </Link>
+              <Link href="#how-it-works" className="text-sm text-slate-300 hover:text-teal-400 transition-colors">
+                How It Works
               </Link>
               <Link href="#features" className="text-sm text-slate-300 hover:text-teal-400 transition-colors">
                 Features
@@ -78,7 +80,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <ScrollReveal direction="fade" delay={0.1}>
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/15 via-cyan-500/15 to-teal-400/15 border border-teal-500/30">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/15 via-cyan-500/15 to-teal-400/15 border border-teal-500/30 backdrop-blur-sm">
                 <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 animate-pulse shadow-lg shadow-teal-400/60" />
                 <GradientText
                   colors={["#5eead4", "#67e8f9", "#40ffaa", "#67e8f9", "#5eead4"]}
@@ -140,6 +142,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* How It Works Section */}
+      <HowItWorksSection />
 
       {/* Features Section */}
       <section id="features" className="relative px-6 py-20 border-t border-slate-800/50 z-10">
