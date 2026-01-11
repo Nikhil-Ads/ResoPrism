@@ -12,15 +12,45 @@ class ResearchRetriever:
         """
         Initialize the retriever with MongoDB and OpenAI clients.
         """
-        self.mongo_uri = os.getenv("MONGODB_URI")
+        # Try both MONGO_URI and MONGODB_URI for compatibility
+        self.mongo_uri = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI")
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         
         if not all([self.mongo_uri, self.openai_api_key]):
-            raise ValueError("Missing MONGO_URI or OPENAI_API_KEY in .env")
+            raise ValueError("Missing MONGO_URI (or MONGODB_URI) or OPENAI_API_KEY in .env")
+        
+        # Validate MongoDB URI format (basic check)
+        if not (self.mongo_uri.startswith("mongodb://") or self.mongo_uri.startswith("mongodb+srv://")):
+            raise ValueError(f"Invalid MongoDB URI format. Must start with 'mongodb://' or 'mongodb+srv://'. Got: {self.mongo_uri[:20]}...")
             
         self.client_openai = openai.OpenAI(api_key=self.openai_api_key)
-        self.client_mongo = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client_mongo.mongo_research
+        
+        # Connect to MongoDB with server selection timeout
+        try:
+            self.client_mongo = pymongo.MongoClient(
+                self.mongo_uri,
+                serverSelectionTimeoutMS=5000  # 5 second timeout
+            )
+            # Test the connection
+            self.client_mongo.admin.command('ping')
+            self.db = self.client_mongo.mongo_research
+        except pymongo.errors.ServerSelectionTimeoutError as e:
+            raise ConnectionError(f"MongoDB connection timeout. Check your connection string and network: {str(e)}")
+        except pymongo.errors.OperationFailure as e:
+            # This is the authentication error we're seeing
+            error_msg = str(e)
+            if "Authentication failed" in error_msg:
+                raise ValueError(
+                    f"MongoDB authentication failed. Please check:\n"
+                    f"1. Username and password in connection string\n"
+                    f"2. Database user permissions\n"
+                    f"3. Connection string format: mongodb://username:password@host:port/database\n"
+                    f"Error: {error_msg}"
+                )
+            else:
+                raise
+        except Exception as e:
+            raise ConnectionError(f"Failed to connect to MongoDB: {str(e)}")
         
     def _generate_embedding(self, text: str) -> List[float]:
         """Internal helper to generate vector embeddings."""
@@ -62,8 +92,23 @@ class ResearchRetriever:
         ]
         
         print(f"  [Retriever] Searching '{collection_name}' collection...")
-        results = list(collection.aggregate(pipeline))
-        return results
+        try:
+            results = list(collection.aggregate(pipeline))
+            return results
+        except pymongo.errors.OperationFailure as e:
+            error_msg = str(e)
+            if "Authentication failed" in error_msg or "code" in error_msg and "18" in error_msg:
+                raise ValueError(
+                    f"MongoDB authentication failed during query. Please check:\n"
+                    f"1. Username and password in your MONGO_URI connection string\n"
+                    f"2. URL-encode special characters in password (e.g., @ becomes %40)\n"
+                    f"3. Ensure the database user has read permissions on 'mongo_research' database\n"
+                    f"4. Connection string format should be: mongodb+srv://username:password@cluster.mongodb.net/database\n"
+                    f"   or: mongodb://username:password@host:port/database\n"
+                    f"Error details: {error_msg}"
+                )
+            else:
+                raise
 
     # --- Public Methods for Teammates' Agents ---
 
