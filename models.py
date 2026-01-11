@@ -138,6 +138,8 @@ class ResearchState(BaseModel):
     intent: Optional[str] = Field(None, description="Intent: grants, papers, news, or all")
     lab_url: Optional[str] = Field(None, description="Optional lab URL")
     lab_profile: Optional[dict] = Field(None, description="Optional lab profile data")
+    text_chunks: Optional[list[str]] = Field(None, description="Optional list of text chunks for keyword extraction")
+    extracted_keywords: Optional[list[str]] = Field(None, description="Top keywords extracted from chunks")
     
     # Output fields (default to empty lists)
     grants: list[GrantCard] = Field(default_factory=list, description="Grant cards from GrantsAgentGraph")

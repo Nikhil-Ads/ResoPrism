@@ -8,6 +8,7 @@ from datetime import datetime
 import requests
 from langgraph.graph import StateGraph, END
 from models import ResearchState, PaperCard
+from research_retriever import ResearchRetriever
 
 
 # Rate limiting: NCBI allows max 3 requests per second without API key
@@ -231,7 +232,8 @@ def _parse_pubmed_article(article: ET.Element) -> Optional[dict]:
 
 def papers_node(state: ResearchState) -> ResearchState:
     """
-    Node that fetches research papers from PubMed using NCBI E-utilities API.
+    Node that fetches research papers from MongoDB vector search first,
+    then falls back to PubMed using NCBI E-utilities API if no results are found.
 
     Uses ESearch to find papers matching the user query, then EFetch to get details.
     Implements rate limiting to comply with NCBI's 3 requests/second limit.
@@ -246,34 +248,95 @@ def papers_node(state: ResearchState) -> ResearchState:
             state_dict["papers"] = []
             return ResearchState(**state_dict)
 
-        # Search PubMed for papers matching the query
-        pmids = _search_pubmed(user_query.strip(), max_results=10)
-
-        if not pmids:
-            # No results found
-            state_dict = state.model_dump()
-            state_dict["papers"] = []
-            return ResearchState(**state_dict)
-
-        # Fetch detailed information for the found papers
-        paper_data_list = _fetch_pubmed_details(pmids)
-
-        # Convert to PaperCard objects
         papers = []
-        for paper_data in paper_data_list:
-            try:
-                paper_card = PaperCard.create(
-                    title=paper_data["title"],
-                    score=paper_data["score"],
-                    published_date=paper_data.get("published_date"),
-                    authors=paper_data.get("authors") or [],
-                    badge=paper_data.get("badge"),
-                    source=paper_data.get("source", "pubmed"),
-                )
-                papers.append(paper_card)
-            except Exception as e:
-                # Skip papers that fail to create (shouldn't happen, but be safe)
-                continue
+        
+        # Try MongoDB vector search first
+        print(f"[Papers Agent] Attempting MongoDB vector search for query: '{user_query}'")
+        try:
+            retriever = ResearchRetriever()
+            mongo_results = retriever.search_papers(user_query.strip(), limit=10)
+            
+            if mongo_results:
+                print(f"[Papers Agent] ✓ MongoDB returned {len(mongo_results)} results - using MongoDB data")
+                # Transform MongoDB results to PaperCard objects
+                for item in mongo_results:
+                    title = item.get("title") or "No title"
+                    score = item.get("score", 0.5)  # Use vectorSearchScore
+                    meta = item.get("meta", {})
+                    
+                    # Extract fields from meta dict
+                    published_date = meta.get("published_date")
+                    authors = meta.get("authors", [])
+                    if isinstance(authors, str):
+                        # If authors is a string, try to parse it as a list
+                        authors = [a.strip() for a in authors.split(",") if a.strip()]
+                    badge = meta.get("badge")
+                    
+                    # If badge not in meta, determine it from published_date
+                    if not badge and published_date:
+                        try:
+                            pub_dt = datetime.strptime(published_date[:10], "%Y-%m-%d")
+                            now = datetime.now()
+                            days_old = (now - pub_dt).days
+                            if days_old < 180:  # Less than 6 months old
+                                badge = "Recent"
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    try:
+                        paper_card = PaperCard.create(
+                            title=title,
+                            score=min(1.0, max(0.0, score)),  # Ensure score is between 0 and 1
+                            published_date=published_date,
+                            authors=authors or [],
+                            badge=badge,
+                            source="mongodb",
+                        )
+                        papers.append(paper_card)
+                    except Exception as e:
+                        # Skip papers that fail to create (shouldn't happen, but be safe)
+                        continue
+                print(f"[Papers Agent] ✓ Successfully created {len(papers)} paper cards from MongoDB")
+        except Exception as mongo_error:
+            # If MongoDB search fails, fall through to API fallback
+            print(f"[Papers Agent] ✗ MongoDB search failed: {str(mongo_error)}")
+            print(f"[Papers Agent] → Falling back to PubMed API")
+        
+        # Fall back to PubMed API if no results from MongoDB
+        if not papers:
+            print(f"[Papers Agent] ✗ MongoDB returned 0 results")
+            print(f"[Papers Agent] → Falling back to PubMed API")
+            # Search PubMed for papers matching the query
+            print(f"[Papers Agent] Searching PubMed...")
+            pmids = _search_pubmed(user_query.strip(), max_results=10)
+
+            if not pmids:
+                # No results found
+                state_dict = state.model_dump()
+                state_dict["papers"] = []
+                return ResearchState(**state_dict)
+
+            # Fetch detailed information for the found papers
+            paper_data_list = _fetch_pubmed_details(pmids)
+
+            # Convert to PaperCard objects
+            for paper_data in paper_data_list:
+                try:
+                    paper_card = PaperCard.create(
+                        title=paper_data["title"],
+                        score=paper_data["score"],
+                        published_date=paper_data.get("published_date"),
+                        authors=paper_data.get("authors") or [],
+                        badge=paper_data.get("badge"),
+                        source=paper_data.get("source", "pubmed"),
+                    )
+                    papers.append(paper_card)
+                except Exception as e:
+                    # Skip papers that fail to create (shouldn't happen, but be safe)
+                    continue
+            
+            if papers:
+                print(f"[Papers Agent] ✓ Successfully fetched {len(papers)} papers from PubMed API")
 
         state_dict = state.model_dump()
         state_dict["papers"] = papers
