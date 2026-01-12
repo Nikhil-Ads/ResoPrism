@@ -1,1 +1,1 @@
-# MongoResearch
+# ResoPrism

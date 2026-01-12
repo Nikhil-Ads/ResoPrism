@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MongoResearch - LangGraph Multi-Agent Research Inbox",
+  title: "ResoPrism - LangGraph Multi-Agent Research Inbox",
   description: "A LangGraph-based multi-agent system that orchestrates research data collection from grants, papers, and news sources, returning ranked inbox cards.",
 };
 

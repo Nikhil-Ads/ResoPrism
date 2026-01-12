@@ -144,7 +144,7 @@ export function CTASection() {
               style={{ color: 'rgba(255, 255, 255, 0.9)' }}
             >
               Experience the power of AI-driven research aggregation. Get started
-              with our interactive demo and see how MongoResearch can revolutionize
+              with our interactive demo and see how ResoPrism can revolutionize
               your research process.
             </p>
           </ScrollReveal>

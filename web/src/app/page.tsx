@@ -43,7 +43,7 @@ export default function Home() {
                 showBorder={false}
                 className="text-xl font-semibold tracking-tight"
               >
-                MongoResearch
+                ResoPrism
               </GradientText>
             </div>
             
