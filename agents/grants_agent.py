@@ -95,7 +95,7 @@ def grants_node(state: ResearchState) -> ResearchState:
             mongo_results = retriever.search_grants(user_query, limit=10)
             
             if mongo_results:
-                print(f"[Grants Agent] ✓ MongoDB returned {len(mongo_results)} results - using MongoDB data")
+                print(f"[Grants Agent] [OK] MongoDB returned {len(mongo_results)} results - using MongoDB data")
                 # Transform MongoDB results to GrantCard objects
                 for item in mongo_results:
                     title = item.get("title") or "Untitled Opportunity"
@@ -137,16 +137,16 @@ def grants_node(state: ResearchState) -> ResearchState:
                         grant_card.meta["agency_code"] = meta.get("agency_code")
                     
                     grants.append(grant_card)
-                print(f"[Grants Agent] ✓ Successfully created {len(grants)} grant cards from MongoDB")
+                print(f"[Grants Agent] [OK] Successfully created {len(grants)} grant cards from MongoDB")
         except Exception as mongo_error:
             # If MongoDB search fails, fall through to API fallback
-            print(f"[Grants Agent] ✗ MongoDB search failed: {str(mongo_error)}")
-            print(f"[Grants Agent] → Falling back to grants.gov API")
+            print(f"[Grants Agent] [X] MongoDB search failed: {str(mongo_error)}")
+            print(f"[Grants Agent] -> Falling back to grants.gov API")
         
         # Fall back to API if no results from MongoDB
         if not grants:
-            print(f"[Grants Agent] ✗ MongoDB returned 0 results")
-            print(f"[Grants Agent] → Falling back to grants.gov API")
+            print(f"[Grants Agent] [X] MongoDB returned 0 results")
+            print(f"[Grants Agent] -> Falling back to grants.gov API")
             # Fetch from grants.gov API
             print(f"[Grants Agent] Fetching from grants.gov API...")
             api_response = fetch_grants_from_api(user_query, rows=10)
@@ -193,7 +193,7 @@ def grants_node(state: ResearchState) -> ResearchState:
                 
                 grants.append(grant_card)
             
-            print(f"[Grants Agent] ✓ Successfully fetched {len(grants)} grants from grants.gov API")
+            print(f"[Grants Agent] [OK] Successfully fetched {len(grants)} grants from grants.gov API")
         
         # Sort by score descending
         grants.sort(key=lambda g: g.score, reverse=True)

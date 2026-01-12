@@ -39,17 +39,17 @@ def run_orchestrator(query: str, intent: str = "all"):
         print("RESULTS")
         print(f"{'='*60}\n")
         
-        print(f"✓ Grants found: {len(result_state.grants)}")
-        print(f"✓ Papers found: {len(result_state.papers)}")
-        print(f"✓ News found: {len(result_state.news)}")
-        print(f"✓ Total inbox cards: {len(result_state.inbox_cards)}")
+        print(f"[OK] Grants found: {len(result_state.grants)}")
+        print(f"[OK] Papers found: {len(result_state.papers)}")
+        print(f"[OK] News found: {len(result_state.news)}")
+        print(f"[OK] Total inbox cards: {len(result_state.inbox_cards)}")
         
         if result_state.errors:
-            print(f"⚠ Errors: {len(result_state.errors)}")
+            print(f"[!] Errors: {len(result_state.errors)}")
             for error in result_state.errors:
                 print(f"  - {error}")
         else:
-            print(f"✓ Errors: 0")
+            print(f"[OK] Errors: 0")
         
         if result_state.inbox_cards:
             print(f"\n{'='*60}")
@@ -67,7 +67,7 @@ def run_orchestrator(query: str, intent: str = "all"):
                         print(f"   Meta: {meta_str}")
                 print()
         else:
-            print("\n⚠ No inbox cards found.")
+            print("\n[!] No inbox cards found.")
         
         print(f"{'='*60}\n")
         return result_state

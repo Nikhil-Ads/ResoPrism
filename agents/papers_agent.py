@@ -257,7 +257,7 @@ def papers_node(state: ResearchState) -> ResearchState:
             mongo_results = retriever.search_papers(user_query.strip(), limit=10)
             
             if mongo_results:
-                print(f"[Papers Agent] ✓ MongoDB returned {len(mongo_results)} results - using MongoDB data")
+                print(f"[Papers Agent] [OK] MongoDB returned {len(mongo_results)} results - using MongoDB data")
                 # Transform MongoDB results to PaperCard objects
                 for item in mongo_results:
                     title = item.get("title") or "No title"
@@ -296,16 +296,16 @@ def papers_node(state: ResearchState) -> ResearchState:
                     except Exception as e:
                         # Skip papers that fail to create (shouldn't happen, but be safe)
                         continue
-                print(f"[Papers Agent] ✓ Successfully created {len(papers)} paper cards from MongoDB")
+                print(f"[Papers Agent] [OK] Successfully created {len(papers)} paper cards from MongoDB")
         except Exception as mongo_error:
             # If MongoDB search fails, fall through to API fallback
-            print(f"[Papers Agent] ✗ MongoDB search failed: {str(mongo_error)}")
-            print(f"[Papers Agent] → Falling back to PubMed API")
+            print(f"[Papers Agent] [X] MongoDB search failed: {str(mongo_error)}")
+            print(f"[Papers Agent] -> Falling back to PubMed API")
         
         # Fall back to PubMed API if no results from MongoDB
         if not papers:
-            print(f"[Papers Agent] ✗ MongoDB returned 0 results")
-            print(f"[Papers Agent] → Falling back to PubMed API")
+            print(f"[Papers Agent] [X] MongoDB returned 0 results")
+            print(f"[Papers Agent] -> Falling back to PubMed API")
             # Search PubMed for papers matching the query
             print(f"[Papers Agent] Searching PubMed...")
             pmids = _search_pubmed(user_query.strip(), max_results=10)
@@ -336,7 +336,7 @@ def papers_node(state: ResearchState) -> ResearchState:
                     continue
             
             if papers:
-                print(f"[Papers Agent] ✓ Successfully fetched {len(papers)} papers from PubMed API")
+                print(f"[Papers Agent] [OK] Successfully fetched {len(papers)} papers from PubMed API")
 
         state_dict = state.model_dump()
         state_dict["papers"] = papers

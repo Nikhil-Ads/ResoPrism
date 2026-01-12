@@ -9,6 +9,7 @@ from typing import Optional, Literal
 from models import ResearchState, InboxCard, GrantCard, PaperCard, NewsCard
 from orchestrator import ORCHESTRATOR
 from ai_summarizer import generate_sector_summary
+from mind_map.mindmap_generator import generate_mindmap, generate_simple_mindmap, MindMapResponse
 
 app = FastAPI(
     title="Research Inbox Orchestrator API",
@@ -65,6 +66,22 @@ class SummaryResponse(BaseModel):
     sector: str = Field(..., description="Sector type that was summarized")
 
 
+class MindMapRequest(BaseModel):
+    """Request model for mind map generation."""
+    grants: list[dict] = Field(default_factory=list, description="List of grant cards")
+    papers: list[dict] = Field(default_factory=list, description="List of paper cards")
+    news: list[dict] = Field(default_factory=list, description="List of news cards")
+    user_query: Optional[str] = Field(None, description="Original search query for context")
+    use_ai: bool = Field(True, description="Use AI to find themes (True) or simple hierarchy (False)")
+
+
+class MindMapApiResponse(BaseModel):
+    """Response model for mind map generation."""
+    markdown: str = Field(..., description="Markdown content for markmap.js")
+    themes: list[str] = Field(default_factory=list, description="Identified themes")
+    connections: list[dict] = Field(default_factory=list, description="Cross-type connections found")
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -75,6 +92,7 @@ async def root():
         "endpoints": {
             "search": "/api/search (POST)",
             "generate_summary": "/api/generate-summary (POST)",
+            "generate_mindmap": "/api/generate-mindmap (POST)",
             "health": "/health (GET)",
             "docs": "/docs (GET)"
         }
@@ -211,6 +229,49 @@ async def generate_summary(request: SummaryRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Summary generation error: {str(e)}")
+
+
+@app.post("/api/generate-mindmap", response_model=MindMapApiResponse)
+async def generate_mindmap_endpoint(request: MindMapRequest):
+    """
+    Generate a mind map visualization from research results.
+    
+    Args:
+        request: MindMapRequest with grants, papers, news arrays and optional user_query
+        
+    Returns:
+        MindMapApiResponse with markdown for markmap.js, themes, and connections
+    """
+    try:
+        if request.use_ai:
+            # Use AI-powered thematic analysis
+            result = generate_mindmap(
+                grants=request.grants,
+                papers=request.papers,
+                news=request.news,
+                user_query=request.user_query
+            )
+            return MindMapApiResponse(
+                markdown=result.markdown,
+                themes=result.themes,
+                connections=result.connections
+            )
+        else:
+            # Use simple hierarchical structure
+            markdown = generate_simple_mindmap(
+                grants=request.grants,
+                papers=request.papers,
+                news=request.news,
+                user_query=request.user_query
+            )
+            return MindMapApiResponse(
+                markdown=markdown,
+                themes=[],
+                connections=[]
+            )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mind map generation error: {str(e)}")
 
 
 if __name__ == "__main__":

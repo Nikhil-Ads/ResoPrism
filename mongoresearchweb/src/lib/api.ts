@@ -1,4 +1,4 @@
-import type { InboxRequest, ResearchResponse, SummaryRequest, SummaryResponse, GrantCard, PaperCard, NewsCard } from "@/types/research";
+import type { InboxRequest, ResearchResponse, SummaryRequest, SummaryResponse, GrantCard, PaperCard, NewsCard, MindMapRequest, MindMapResponse } from "@/types/research";
 import { LAB_PROFILE, USER_INFO } from "./labProfile";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -108,5 +108,46 @@ export async function generateSummary(
       throw new Error(`Failed to generate summary: ${error.message}`);
     }
     throw new Error("Failed to generate summary: Unknown error");
+  }
+}
+
+export async function generateMindMap(
+  grants: GrantCard[],
+  papers: PaperCard[],
+  news: NewsCard[],
+  userQuery?: string,
+  useAi: boolean = true
+): Promise<MindMapResponse> {
+  const requestBody: MindMapRequest = {
+    grants,
+    papers,
+    news,
+    user_query: userQuery,
+    use_ai: useAi,
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-mindmap`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}. ${errorText}`
+      );
+    }
+
+    const data: MindMapResponse = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to generate mind map: ${error.message}`);
+    }
+    throw new Error("Failed to generate mind map: Unknown error");
   }
 }

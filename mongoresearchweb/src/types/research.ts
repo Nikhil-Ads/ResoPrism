@@ -88,3 +88,21 @@ export interface SummaryResponse {
   summary: string;
   sector: "grants" | "papers" | "news";
 }
+
+export interface MindMapRequest {
+  grants: GrantCard[];
+  papers: PaperCard[];
+  news: NewsCard[];
+  user_query?: string;
+  use_ai?: boolean;
+}
+
+export interface MindMapResponse {
+  markdown: string;
+  themes: string[];
+  connections: Array<{
+    from_type: string;
+    to_type: string;
+    description: string;
+  }>;
+}

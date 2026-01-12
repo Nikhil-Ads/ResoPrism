@@ -18,10 +18,11 @@ import { ResearchCard } from "@/components/ResearchCard";
 import { ResearchCarousel } from "@/components/ResearchCarousel";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { fetchInbox, generateSummary } from "@/lib/api";
+import { fetchInbox, generateSummary, generateMindMap } from "@/lib/api";
 import type { ResearchResponse } from "@/types/research";
 import { USER_INFO, LAB_PROFILE } from "@/lib/labProfile";
-import { Search, ArrowLeft, X, User, ExternalLink } from "lucide-react";
+import { Search, ArrowLeft, X, User, ExternalLink, Network } from "lucide-react";
+import { MindMap } from "@/components/MindMap";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
@@ -44,6 +45,12 @@ export default function DashboardPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // Mind map states
+  const [showMindMap, setShowMindMap] = useState(false);
+  const [mindMapMarkdown, setMindMapMarkdown] = useState<string>("");
+  const [mindMapLoading, setMindMapLoading] = useState(false);
+  const [mindMapError, setMindMapError] = useState<string | null>(null);
 
   // Load dashboard data on mount
   useEffect(() => {
@@ -102,6 +109,10 @@ export default function DashboardPage() {
       setSearchLoading(true);
       setSearchError(null);
       setHasSearched(true);
+      // Reset mind map state for new search
+      setShowMindMap(false);
+      setMindMapMarkdown("");
+      setMindMapError(null);
       const result = await fetchInbox(query.trim(), intent);
       setSearchData(result);
     } catch (err) {
@@ -123,6 +134,50 @@ export default function DashboardPage() {
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
+    }
+  };
+
+  // Generate mind map from current data
+  const handleGenerateMindMap = async (data: ResearchResponse, queryText: string) => {
+    try {
+      setMindMapLoading(true);
+      setMindMapError(null);
+      
+      const result = await generateMindMap(
+        data.grants,
+        data.papers,
+        data.news,
+        queryText,
+        true // use AI
+      );
+      
+      setMindMapMarkdown(result.markdown);
+      setShowMindMap(true);
+    } catch (err) {
+      setMindMapError(err instanceof Error ? err.message : "Failed to generate mind map");
+    } finally {
+      setMindMapLoading(false);
+    }
+  };
+
+  // Toggle mind map visibility (uses search results data)
+  const handleToggleMindMap = () => {
+    if (!showMindMap && searchData) {
+      // Generate mind map if not already loaded
+      if (!mindMapMarkdown && !mindMapLoading) {
+        handleGenerateMindMap(searchData, searchData.user_query);
+      } else {
+        setShowMindMap(true);
+      }
+    } else {
+      setShowMindMap(false);
+    }
+  };
+
+  // Refresh mind map
+  const handleRefreshMindMap = () => {
+    if (searchData) {
+      handleGenerateMindMap(searchData, searchData.user_query);
     }
   };
 
@@ -354,11 +409,27 @@ export default function DashboardPage() {
             <div className="space-y-8">
               {/* Results Summary */}
               <div className="flex flex-wrap items-center gap-4">
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-100">Search Results</h2>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Query: &quot;{searchData.user_query}&quot; | Intent: {searchData.intent || "all"}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-100">Search Results</h2>
+                    <p className="text-sm text-slate-400 mt-1">
+                      Query: &quot;{searchData.user_query}&quot; | Intent: {searchData.intent || "all"}
+                    </p>
+                  </div>
+                  {/* Mind Map Toggle Button */}
+                  <Button
+                    onClick={handleToggleMindMap}
+                    variant={showMindMap ? "default" : "outline"}
+                    disabled={mindMapLoading}
+                    size="sm"
+                    className={showMindMap 
+                      ? "bg-teal-500 hover:bg-teal-400 text-slate-950" 
+                      : "border-slate-700 bg-slate-900/80 hover:bg-slate-800/80 hover:border-teal-500/50"
+                    }
+                  >
+                    <Network className="mr-2 h-4 w-4" />
+                    {mindMapLoading ? "Generating..." : showMindMap ? "Hide Mind Map" : "Show Mind Map"}
+                  </Button>
                 </div>
                 <div className="ml-auto flex flex-wrap gap-2">
                   {searchData.grants.length > 0 && (
@@ -378,6 +449,18 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+
+              {/* Mind Map Section */}
+              {(showMindMap || mindMapLoading) && (
+                <div className="mb-8">
+                  <MindMap
+                    markdown={mindMapMarkdown}
+                    loading={mindMapLoading}
+                    error={mindMapError}
+                    onRefresh={handleRefreshMindMap}
+                  />
+                </div>
+              )}
 
               {/* Errors from API */}
               {searchData.errors && searchData.errors.length > 0 && (

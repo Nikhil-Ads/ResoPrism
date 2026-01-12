@@ -25,7 +25,7 @@ def news_node(state: ResearchState) -> ResearchState:
             mongo_results = retriever.search_news(user_query, limit=10)
             
             if mongo_results:
-                print(f"[News Agent] ✓ MongoDB returned {len(mongo_results)} results - using MongoDB data")
+                print(f"[News Agent] [OK] MongoDB returned {len(mongo_results)} results - using MongoDB data")
                 # Transform MongoDB results to NewsCard objects
                 for item in mongo_results:
                     title = item.get("title") or "Untitled"
@@ -60,16 +60,16 @@ def news_node(state: ResearchState) -> ResearchState:
                         source="mongodb",
                     )
                     news.append(news_card)
-                print(f"[News Agent] ✓ Successfully created {len(news)} news cards from MongoDB")
+                print(f"[News Agent] [OK] Successfully created {len(news)} news cards from MongoDB")
         except Exception as mongo_error:
             # If MongoDB search fails, fall through to API fallback
-            print(f"[News Agent] ✗ MongoDB search failed: {str(mongo_error)}")
-            print(f"[News Agent] → Falling back to NewsAPI")
+            print(f"[News Agent] [X] MongoDB search failed: {str(mongo_error)}")
+            print(f"[News Agent] -> Falling back to NewsAPI")
         
         # Fall back to NewsAPI if no results from MongoDB
         if not news:
-            print(f"[News Agent] ✗ MongoDB returned 0 results")
-            print(f"[News Agent] → Falling back to NewsAPI")
+            print(f"[News Agent] [X] MongoDB returned 0 results")
+            print(f"[News Agent] -> Falling back to NewsAPI")
             # Initialize NewsAPI client
             print(f"[News Agent] Fetching from NewsAPI...")
             api_key = os.getenv("NEWS_API_KEY")
@@ -134,7 +134,7 @@ def news_node(state: ResearchState) -> ResearchState:
                     news.append(news_card)
             
             if news:
-                print(f"[News Agent] ✓ Successfully fetched {len(news)} news articles from NewsAPI")
+                print(f"[News Agent] [OK] Successfully fetched {len(news)} news articles from NewsAPI")
 
         state_dict = state.model_dump()
         state_dict["news"] = news
